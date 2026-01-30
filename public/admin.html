@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 | TVING Newsletter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff153c;
+        }
+
+        .login-form,
+        .admin-panel {
+            display: none;
+        }
+
+        .login-form.active,
+        .admin-panel.active {
+            display: block;
+        }
+
+        .login-box {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 40px;
+            background: #1a1a1a;
+            border-radius: 16px;
+        }
+
+        .login-box h2 {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 14px 18px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        input {
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #333;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ff153c;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff153c, #e50914);
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: #fff;
+            cursor: pointer;
+            padding: 8px 16px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: #fff;
+            cursor: pointer;
+            padding: 12px 24px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: #fff;
+            cursor: pointer;
+            padding: 8px 12px;
+            font-size: 12px;
+            width: auto;
+            margin-right: 5px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #1a1a1a;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ff153c;
+        }
+
+        .stat-card .label {
+            color: #888;
+            margin-top: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        th {
+            background: #252525;
+            color: #888;
+            font-weight: 500;
+        }
+
+        tr:hover {
+            background: #252525;
+        }
+
+        .status-active {
+            color: #28a745;
+        }
+
+        .status-inactive {
+            color: #dc3545;
+        }
+
+        .actions {
+            margin-bottom: 30px;
+        }
+
+        .actions h3 {
+            margin-bottom: 15px;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #28a74520;
+            color: #28a745;
+            display: block;
+        }
+
+        .message.error {
+            background: #dc354520;
+            color: #dc3545;
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h3 {
+            margin-bottom: 20px;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 로그인 폼 -->
+        <div class="login-form active" id="loginForm">
+            <div class="login-box">
+                <h2>🔐 관리자 로그인</h2>
+                <input type="password" id="password" placeholder="비밀번호 입력">
+                <button class="btn-primary" onclick="login()">로그인</button>
+                <p id="loginError" style="color: #dc3545; text-align: center; display: none;">비밀번호가 틀렸습니다</p>
+            </div>
+        </div>
+
+        <!-- 관리자 패널 -->
+        <div class="admin-panel" id="adminPanel">
+            <div class="header">
+                <div class="logo">TVING Newsletter Admin</div>
+                <button class="btn-danger" onclick="logout()">로그아웃</button>
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <!-- 통계 -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="number" id="totalSubscribers">0</div>
+                    <div class="label">총 구독자</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="activeSubscribers">0</div>
+                    <div class="label">활성 구독자</div>
+                </div>
+            </div>
+
+            <!-- 수동 발송 -->
+            <div class="section actions">
+                <h3>📧 수동 뉴스레터 발송</h3>
+                <button class="btn-success" onclick="sendNewsletter()">지금 발송하기</button>
+            </div>
+
+            <!-- 구독자 목록 -->
+            <div class="section">
+                <h3>👥 구독자 목록</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>이메일 (마스킹)</th>
+                            <th>가입일</th>
+                            <th>상태</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subscriberList">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 발송 내역 -->
+            <div class="section">
+                <h3>📬 발송 내역</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>발송일시</th>
+                            <th>총 구독자</th>
+                            <th>성공</th>
+                            <th>기사 수</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sendLogList">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_PASSWORD = 'tving2026';  // 관리자 비밀번호
+
+        function login() {
+            const password = document.getElementById('password').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('loginForm').classList.remove('active');
+                document.getElementById('adminPanel').classList.add('active');
+                loadSubscribers();
+                loadSendLogs();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        function logout() {
+            document.getElementById('adminPanel').classList.remove('active');
+            document.getElementById('loginForm').classList.add('active');
+            document.getElementById('password').value = '';
+        }
+
+        function showMessage(msg, type) {
+            const el = document.getElementById('message');
+            el.textContent = msg;
+            el.className = 'message ' + type;
+            setTimeout(() => el.className = 'message', 3000);
+        }
+
+        async function loadSubscribers() {
+            try {
+                const res = await fetch('/api/subscribers');
+                const data = await res.json();
+
+                document.getElementById('totalSubscribers').textContent = data.total;
+                document.getElementById('activeSubscribers').textContent =
+                    data.subscribers.filter(s => s.is_active === 1).length;
+
+                const tbody = document.getElementById('subscriberList');
+                tbody.innerHTML = data.subscribers.map(s => `
+                    <tr>
+                        <td>${s.id}</td>
+                        <td>${s.email_masked}</td>
+                        <td>${s.created_at}</td>
+                        <td class="${s.is_active ? 'status-active' : 'status-inactive'}">
+                            ${s.is_active ? '활성' : '비활성'}
+                        </td>
+                        <td>
+                            <button class="btn-info" onclick="testSendToSubscriber(${s.id})">테스트</button>
+                            <button class="btn-danger" onclick="deleteSubscriber(${s.id})">삭제</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function loadSendLogs() {
+            try {
+                const res = await fetch('/api/send-logs');
+                const data = await res.json();
+
+                const tbody = document.getElementById('sendLogList');
+                if (data.logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;">발송 내역이 없습니다</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.logs.map(log => `
+                    <tr>
+                        <td>${log.sent_at}</td>
+                        <td>${log.total_subscribers}명</td>
+                        <td>${log.success_count}명</td>
+                        <td>${log.article_count}건</td>
+                        <td class="${log.status === 'success' ? 'status-active' : 'status-inactive'}">
+                            ${log.status === 'success' ? '✅ 성공' : '❌ 실패'}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deleteSubscriber(id) {
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+
+            try {
+                const res = await fetch('/api/subscribers/' + id, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (data.success) {
+                    showMessage('삭제되었습니다', 'success');
+                    loadSubscribers();
+                } else {
+                    showMessage('삭제 실패', 'error');
+                }
+            } catch (e) {
+                showMessage('오류 발생', 'error');
+            }
+        }
+
+        async function sendNewsletter() {
+            if (!confirm('모든 구독자에게 뉴스레터를 발송하시겠습니까?')) return;
+
+            showMessage('발송 중...', 'success');
+
+            try {
+                const res = await fetch('/api/send-now', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    showMessage(`✅ ${data.sent}명에게 발송 완료!`, 'success');
+                    loadSendLogs();  // 발송 후 로그 새로고침
+                } else {
+                    showMessage('발송 실패: ' + data.message, 'error');
+                }
+            } catch (e) {
+                showMessage('오류 발생', 'error');
+            }
+        }
+
+        async function testSendToSubscriber(id) {
+            if (!confirm('이 구독자에게 테스트 메일을 발송하시겠습니까?')) return;
+
+            showMessage('테스트 발송 중...', 'success');
+
+            try {
+                const res = await fetch(`/api/subscribers/${id}/test-send`, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    showMessage(`✅ ${data.message}`, 'success');
+                } else {
+                    showMessage('발송 실패: ' + data.message, 'error');
+                }
+            } catch (e) {
+                showMessage('오류 발생', 'error');
+            }
+        }
+
+        // Enter 키로 로그인
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+
+</html>

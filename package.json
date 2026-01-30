@@ -1,0 +1,29 @@
+{
+  "name": "tving-newsletter",
+  "version": "1.0.0",
+  "description": "티빙 뉴스레터 구독 서비스 - 매일 오전 7:30 뉴스 기사 이메일 발송",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "crawl": "node src/crawler.js",
+    "send": "node src/emailService.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sql.js": "^1.10.3",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "nodemailer": "^6.9.7",
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5"
+  },
+  "keywords": [
+    "tving",
+    "newsletter",
+    "news"
+  ],
+  "author": "",
+  "license": "MIT"
+}

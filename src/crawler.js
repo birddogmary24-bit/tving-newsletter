@@ -36,9 +36,17 @@ async function fetchArticle(articleId) {
         const title = $('meta[property="og:title"]').attr('content') ||
             $('title').text().replace(' | TVING', '').trim();
 
-        // 기사 설명
-        const description = $('meta[property="og:description"]').attr('content') ||
-            $('meta[name="description"]').attr('content') || '';
+        // 기사 설명 (우선순위: og:description -> .article_body 텍스트 -> meta description)
+        let description = $('meta[property="og:description"]').attr('content') || '';
+
+        // 설명이 기본 문구인 경우 본문에서 추출
+        if (!description || description.includes('TVING에서 제공하는') || description.length < 20) {
+            // 본문 선택자 시도 (티빙 뉴스 구조에 맞춰 조정 필요, 일반적인 태그 시도)
+            const bodyText = $('div.article-body, div.article_view, .news_content').text().trim();
+            if (bodyText) {
+                description = bodyText.substring(0, 100) + '...';
+            }
+        }
 
         // 썸네일 이미지
         const thumbnail = $('meta[property="og:image"]').attr('content') || '';

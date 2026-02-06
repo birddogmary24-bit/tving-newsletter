@@ -196,7 +196,7 @@ body {
 }
 
 .hero-description {
-    font-size: 15px;
+    font-size: 17px;
     color: var(--text-secondary);
     line-height: 1.7;
     animation: fadeInUp 0.6s ease-out 0.2s both;
@@ -581,7 +581,7 @@ body {
     }
 
     .hero-description {
-        font-size: 14px;
+        font-size: 16px;
         padding: 0 10px;
     }
 

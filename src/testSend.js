@@ -9,8 +9,6 @@ const { fetchArticle } = require('./crawler');
 const { generateEmailTemplate } = require('./emailService');
 
 const TEST_RECIPIENTS = [
-    'sg-grp@tving.com',
-    'jh.park212@tving.com',
     'triones24@gmail.com'
 ];
 
@@ -22,11 +20,9 @@ async function runManualTest() {
     // 1. 몇 개의 기사 크롤링
     console.log('[1/3] 기사 크롤링 중...');
     const articleIds = [
-        'A00000136232',
-        'A00000136231',
-        'A00000136230',
-        'A00000136229',
-        'A00000136228'
+        'A00000137129', // 최근 기사 (사법농단)
+        'A00000137128',
+        'A00000137127'
     ];
 
     const articles = [];

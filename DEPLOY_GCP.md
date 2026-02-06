@@ -1,4 +1,33 @@
-# GCP 배포 가이드 (Compute Engine)
+# GCP 배포 가이드 (Cloud Run 또는 Compute Engine)
+
+티빙 뉴스레터 서비스를 Google Cloud Platform에 배포하는 가이드입니다. 
+
+> 💡 **비용 절감 추천**: 24시간 켜져 있는 **Compute Engine**보다, 뉴스레터 발송 시에만 실행되는 **Cloud Run** 사용을 권장합니다. (대기 시 비용 0원)
+
+---
+
+## 방법 1: Cloud Run 배포 (추천 - 비용 0원 가능)
+
+### 1. 배포 커맨드
+```bash
+# 로컬 터미널에서 실행
+gcloud run deploy tving-newsletter \
+  --source . \
+  --platform managed \
+  --region asia-northeast3 \
+  --min-instances 0 \
+  --max-instances 1 \
+  --allow-unauthenticated \
+  --set-env-vars="PORT=3000,EMAIL_USER=triones24@gmail.com,EMAIL_PASS=tafqhasnptckctfa,ENCRYPTION_KEY=tving-newsletter-secret-key-32c"
+```
+
+### 2. 특징
+- **비용**: 서버가 사용되지 않을 때는 **0원**입니다.
+- **확장성**: 사용자 접속이 늘어나면 자동으로 조절됩니다.
+
+---
+
+## 방법 2: Compute Engine 배포 (기존 방식)
 
 티빙 뉴스레터 서비스를 Google Cloud Platform에 배포하는 가이드입니다.
 

@@ -6,6 +6,7 @@
 const cron = require('node-cron');
 const { crawlTodayArticles } = require('./crawler');
 const { sendNewsletterToAll } = require('./emailService');
+const { addSendLog } = require('./database');
 
 /**
  * 뉴스레터 발송 작업 실행
@@ -22,6 +23,7 @@ async function runNewsletterJob() {
 
         if (articles.length === 0) {
             console.log('[Scheduler] No new articles found. Skipping email send.');
+            // 기사가 없어도 시도는 했으므로 기록 (선택 사항, 여기서는 넘김)
             return;
         }
 
@@ -29,12 +31,21 @@ async function runNewsletterJob() {
 
         // 2. 뉴스레터 발송
         console.log('\n[Scheduler] Step 2: Sending newsletter...');
-        await sendNewsletterToAll(articles);
+        const result = await sendNewsletterToAll(articles);
 
-        console.log('\n[Scheduler] Job completed successfully.');
+        // 3. 발송 로그 저장
+        addSendLog(
+            result.totalSubscribers,
+            result.successCount,
+            articles.length,
+            'success'
+        );
+
+        console.log('\n[Scheduler] Job completed successfully and logged.');
 
     } catch (error) {
         console.error('[Scheduler] Job failed:', error);
+        addSendLog(0, 0, 0, 'failed');
     }
 }
 

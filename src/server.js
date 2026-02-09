@@ -10,8 +10,8 @@ require('dotenv').config();
 
 const { initDatabase, addSubscriber, getMaskedSubscribers, getSubscriberCount, deleteSubscriber, getActiveSubscribers, addSendLog, getSendLogs } = require('./database');
 const { encryptEmail, maskEmail, decryptEmail } = require('./crypto');
-const { startScheduler } = require('./scheduler');
-const { fetchArticle } = require('./crawler');
+const { startScheduler, runNewsletterJob } = require('./scheduler');
+const { fetchArticle, getLatestArticles } = require('./crawler');
 const { generateEmailTemplate, sendEmail } = require('./emailService');
 
 const app = express();
@@ -24,20 +24,6 @@ initDatabase();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
-
-/**
- * POST /api/admin/login
- * 관리자 로그인
- */
-app.post('/api/admin/login', (req, res) => {
-    const { password } = req.body;
-    const adminPassword = process.env.ADMIN_PASSWORD || 'tving2026';
-
-    if (password === adminPassword) {
-        return res.json({ success: true });
-    }
-    return res.status(401).json({ success: false, message: '비밀번호가 틀렸습니다.' });
-});
 
 // =============================================
 // API 라우트
@@ -182,14 +168,8 @@ app.post('/api/subscribers/:id/test-send', async (req, res) => {
         const email = decryptEmail(subscriber.email_encrypted);
         console.log(`[Admin] Test send to ID ${id}: ${email}`);
 
-        // 기사 수집
-        const articleIds = ['A00000136232', 'A00000136231', 'A00000136230', 'A00000136229', 'A00000136228'];
-        const articles = [];
-        for (const aid of articleIds) {
-            const article = await fetchArticle(aid);
-            if (article) articles.push(article);
-            await new Promise(r => setTimeout(r, 200));
-        }
+        // 최신 기사 30개 수집 (카테고리별 그룹화 포함)
+        const articles = await getLatestArticles(30);
 
         if (articles.length === 0) {
             return res.json({ success: false, message: '기사 수집 실패' });
@@ -216,14 +196,8 @@ app.post('/api/send-now', async (req, res) => {
     try {
         console.log('[Admin] Manual send triggered');
 
-        // 기사 수집
-        const articleIds = ['A00000136232', 'A00000136231', 'A00000136230', 'A00000136229', 'A00000136228'];
-        const articles = [];
-        for (const id of articleIds) {
-            const article = await fetchArticle(id);
-            if (article) articles.push(article);
-            await new Promise(r => setTimeout(r, 300));
-        }
+        // 최신 기사 30개 수집 (카테고리별 그룹화 포함)
+        const articles = await getLatestArticles(30);
 
         if (articles.length === 0) {
             addSendLog(0, 0, 0, 'failed');
@@ -273,6 +247,21 @@ app.get('/api/send-logs', (req, res) => {
     }
 });
 
+/**
+ * GET /api/cron/send
+ * Cloud Scheduler용 트리거 엔드포인트
+ */
+app.get('/api/cron/send', async (req, res) => {
+    try {
+        console.log('[Cron] Newsletter trigger received');
+        await runNewsletterJob();
+        res.json({ success: true, message: 'Newsletter job started' });
+    } catch (error) {
+        console.error('[Cron] Job failed:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // SPA 폴백 (모든 경로를 index.html로)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
@@ -303,3 +292,4 @@ async function startServer() {
 startServer().catch(console.error);
 
 module.exports = app;
+Pressi

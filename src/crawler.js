@@ -36,41 +36,103 @@ async function fetchArticle(articleId) {
         const title = $('meta[property="og:title"]').attr('content') ||
             $('title').text().replace(' | TVING', '').trim();
 
-        // 기사가 존재하는지 확인 (404 페이지, 리다이렉트 페이지, 또는 제목이 부실한 경우 제외)
-        if (!title ||
-            title === '뉴스' ||
-            title === 'TVING' ||
-            title.includes('404') ||
-            title.includes('찾을 수 없') ||
-            title.includes('페이지를 찾을')) {
-            return null;
-        }
-
         // 기사 설명 (우선순위: og:description -> .article_body 텍스트 -> meta description)
         let description = $('meta[property="og:description"]').attr('content') || '';
 
-        // 설명이 기본 문구인 경우 본문에서 추출
-        if (!description || description.includes('TVING에서 제공하는') || description.length < 20) {
-            // 본문 선택자 시도
-            const bodyText = $('div.article-body, div.article_view, .news_content').text().trim();
-            if (bodyText) {
-                description = bodyText.substring(0, 100) + '...';
+        // 제목과 완전히 같거나 너무 짧으면 본문에서 추출 시도
+        if (!description || description === title || description.length < 50 || description.includes('TVING에서 제공하는')) {
+            // 본문 선택자 시도 (티빙 뉴스 구조에 맞춰 여러 시도)
+            const bodySelectors = [
+                'div[class*="content"]',
+                'div[class*="body"]',
+                'div[class*="article"]',
+                '.news_content',
+                'div[class*="css-"] p',
+                'p' // 모든 p 태그 시도 (최후의 수단)
+            ];
+
+            let bodyText = '';
+            for (const selector of bodySelectors) {
+                // p 태그인 경우 모든 p 태그의 텍스트를 합침
+                let text = '';
+                if (selector === 'p' || selector.endsWith(' p')) {
+                    $(selector).each((i, el) => {
+                        const pText = $(el).text().trim();
+                        if (pText.length > 10) text += pText + ' ';
+                    });
+                } else {
+                    text = $(selector).text().trim();
+                }
+
+                if (text && text.length > bodyText.length) {
+                    bodyText = text;
+                }
+            }
+
+            if (bodyText && bodyText.length > 20) {
+                description = bodyText.replace(/\s+/g, ' ').substring(0, 200).trim();
+            } else if (description.includes('TVING에서 제공하는')) {
+                // 본문도 못 찾았는데 기존 설명이 범용 문구라면 차라리 비움
+                description = '';
             }
         }
 
-        // 본문이나 설명이 아예 없으면 유효하지 않은 기사로 간주
-        if (!description || description.length < 10) {
-            return null;
+        // JSON-LD에서 설명 추출 시도 (더 정확할 수 있음)
+        if (!description || description.length < 50) {
+            try {
+                const ldJsonText = $('script[type="application/ld+json"]').first().html();
+                if (ldJsonText) {
+                    const ldJson = JSON.parse(ldJsonText);
+                    const ldDesc = ldJson.description || ldJson.articleBody;
+                    if (ldDesc && ldDesc.length > (description?.length || 0)) {
+                        description = ldDesc.replace(/\s+/g, ' ').substring(0, 200).trim();
+                    }
+                }
+            } catch (e) {
+                // ignore JSON parse error
+            }
         }
 
         // 썸네일 이미지
         const thumbnail = $('meta[property="og:image"]').attr('content') || '';
+
+        // 기사가 존재하는지 확인 (404 페이지가 아닌지)
+        if (!title || title.includes('404') || title.includes('찾을 수 없') || title === '뉴스 | TVING') {
+            return null;
+        }
+
+        // 카테고리 추출 (썸네일 URL에서 추출)
+        let category = '뉴스';
+        if (thumbnail) {
+            const match = thumbnail.match(/ntgs\/([^/]+)\//);
+            if (match && match[1]) {
+                const map = {
+                    'culture': '문화/연예',
+                    'disaster': '사회/재난',
+                    'economy': '경제',
+                    'politics': '정치',
+                    'news': '통합뉴스',
+                    'sports': '스포츠',
+                    'world': '국제',
+                    'society': '사회',
+                    'science': 'IT/과학',
+                    'entertainment': '연예',
+                    'lifestyle': '생활/문화'
+                };
+                category = map[match[1].toLowerCase()] || match[1];
+                // 첫 글자 대문자 처리 (매핑에 없는 경우)
+                if (category === match[1]) {
+                    category = category.charAt(0).toUpperCase() + category.slice(1);
+                }
+            }
+        }
 
         return {
             id: articleId,
             title: title,
             description: description,
             thumbnail: thumbnail,
+            category: category,
             url: url,
             crawledAt: new Date().toISOString()
         };
@@ -155,8 +217,83 @@ async function crawlTodayArticles() {
     }
 
     console.log(`[Crawler] Total articles found: ${articles.length}`);
-
     return articles;
+}
+
+/**
+ * 최신 기사 N개 가져오기
+ * @param {number} count - 가져올 기사 수
+ * @returns {Array} - 기사 목록
+ */
+async function getLatestArticles(totalLimit = 30) {
+    console.log(`[Crawler] Fetching latest articles (goal: ${totalLimit})...`);
+
+    // 1. 최신 ID 찾기
+    let currentId = getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
+    let currentNum = parseArticleNum(currentId);
+
+    let latestNum = currentNum;
+    let consecutiveNotFound = 0;
+    // 최신 기사를 찾기 위해 충분히 탐색 (150개 정도)
+    for (let i = 1; i <= 150; i++) {
+        const id = formatArticleId(currentNum + i);
+        const a = await fetchArticle(id);
+        if (a) {
+            latestNum = currentNum + i;
+            consecutiveNotFound = 0;
+        } else {
+            consecutiveNotFound++;
+            if (consecutiveNotFound >= 10) break;
+        }
+    }
+
+    // 2. 충분한 양의 기사를 수집 (카테고리별 그룹화를 위해 목표의 2.5배 정도 수집)
+    const pool = [];
+    let num = latestNum;
+    let checkedCount = 0;
+    const POOL_SIZE = Math.max(80, totalLimit * 2);
+
+    while (pool.length < POOL_SIZE && checkedCount < POOL_SIZE * 1.5) {
+        const id = formatArticleId(num);
+        const a = await fetchArticle(id);
+        if (a) {
+            pool.push(a);
+        }
+        num--;
+        checkedCount++;
+        if (num < 100000) break;
+        await sleep(50);
+    }
+
+    // 3. 카테고리별 그룹화 (카테고리당 최대 3개)
+    const categoryGroups = {};
+    for (const a of pool) {
+        if (!categoryGroups[a.category]) {
+            categoryGroups[a.category] = [];
+        }
+        if (categoryGroups[a.category].length < 3) {
+            categoryGroups[a.category].push(a);
+        }
+    }
+
+    // 4. 카테고리 순서 랜덤화
+    const categories = Object.keys(categoryGroups);
+    for (let i = categories.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [categories[i], categories[j]] = [categories[j], categories[i]];
+    }
+
+    // 5. 최종 리스트 구성 (총합 totalLimit까지)
+    const finalArticles = [];
+    for (const cat of categories) {
+        for (const a of categoryGroups[cat]) {
+            if (finalArticles.length < totalLimit) {
+                finalArticles.push(a);
+            }
+        }
+    }
+
+    return finalArticles;
 }
 
 /**
@@ -215,6 +352,8 @@ module.exports = {
     fetchArticle,
     crawlTodayArticles,
     crawlArticleRange,
+    getLatestArticles,
     formatArticleId,
     parseArticleNum
 };
+Pr

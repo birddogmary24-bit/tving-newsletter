@@ -298,17 +298,29 @@
     </div>
 
     <script>
-        const ADMIN_PASSWORD = 'tving2026';  // 관리자 비밀번호
-
-        function login() {
+        async function login() {
             const password = document.getElementById('password').value;
-            if (password === ADMIN_PASSWORD) {
-                document.getElementById('loginForm').classList.remove('active');
-                document.getElementById('adminPanel').classList.add('active');
-                loadSubscribers();
-                loadSendLogs();
-            } else {
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('loginForm').classList.remove('active');
+                    document.getElementById('adminPanel').classList.add('active');
+                    loadSubscribers();
+                    loadSendLogs();
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                    document.getElementById('loginError').textContent = data.message;
+                }
+            } catch (e) {
                 document.getElementById('loginError').style.display = 'block';
+                document.getElementById('loginError').textContent = '로그인 중 오류가 발생했습니다.';
             }
         }
 

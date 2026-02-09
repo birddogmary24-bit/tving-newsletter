@@ -7,7 +7,7 @@ const crypto = require('crypto');
 require('dotenv').config();
 
 const ALGORITHM = 'aes-256-cbc';
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'tving-newsletter-secret-key-32c';
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-dev-key-replace-in-prod-32c';
 const IV_LENGTH = 16;
 
 /**

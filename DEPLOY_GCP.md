@@ -18,7 +18,7 @@ gcloud run deploy tving-newsletter \
   --min-instances 0 \
   --max-instances 1 \
   --allow-unauthenticated \
-  --set-env-vars="PORT=3000,EMAIL_USER=triones24@gmail.com,EMAIL_PASS=tafqhasnptckctfa,ENCRYPTION_KEY=tving-newsletter-secret-key-32c"
+  --set-env-vars="PORT=3000,EMAIL_USER=your-email@gmail.com,EMAIL_PASS=your-app-password,ENCRYPTION_KEY=your-32-char-key"
 ```
 
 ### 2. 특징
@@ -117,9 +117,9 @@ nano .env
 ```
 
 ```env
-ENCRYPTION_KEY=tving-newsletter-secret-key-32c
-EMAIL_USER=triones24@gmail.com
-EMAIL_PASS=tafqhasnptckctfa
+ENCRYPTION_KEY=your-32-character-secret-key-here
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
 PORT=3000
 LATEST_ARTICLE_ID=A00000136232
 ```

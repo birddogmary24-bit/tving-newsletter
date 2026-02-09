@@ -36,25 +36,35 @@ async function fetchArticle(articleId) {
         const title = $('meta[property="og:title"]').attr('content') ||
             $('title').text().replace(' | TVING', '').trim();
 
+        // 기사가 존재하는지 확인 (404 페이지, 리다이렉트 페이지, 또는 제목이 부실한 경우 제외)
+        if (!title ||
+            title === '뉴스' ||
+            title === 'TVING' ||
+            title.includes('404') ||
+            title.includes('찾을 수 없') ||
+            title.includes('페이지를 찾을')) {
+            return null;
+        }
+
         // 기사 설명 (우선순위: og:description -> .article_body 텍스트 -> meta description)
         let description = $('meta[property="og:description"]').attr('content') || '';
 
         // 설명이 기본 문구인 경우 본문에서 추출
         if (!description || description.includes('TVING에서 제공하는') || description.length < 20) {
-            // 본문 선택자 시도 (티빙 뉴스 구조에 맞춰 조정 필요, 일반적인 태그 시도)
+            // 본문 선택자 시도
             const bodyText = $('div.article-body, div.article_view, .news_content').text().trim();
             if (bodyText) {
                 description = bodyText.substring(0, 100) + '...';
             }
         }
 
-        // 썸네일 이미지
-        const thumbnail = $('meta[property="og:image"]').attr('content') || '';
-
-        // 기사가 존재하는지 확인 (404 페이지가 아닌지)
-        if (!title || title.includes('404') || title.includes('찾을 수 없')) {
+        // 본문이나 설명이 아예 없으면 유효하지 않은 기사로 간주
+        if (!description || description.length < 10) {
             return null;
         }
+
+        // 썸네일 이미지
+        const thumbnail = $('meta[property="og:image"]').attr('content') || '';
 
         return {
             id: articleId,

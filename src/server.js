@@ -25,6 +25,20 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+/**
+ * POST /api/admin/login
+ * 관리자 로그인
+ */
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body;
+    const adminPassword = process.env.ADMIN_PASSWORD || 'tving2026';
+
+    if (password === adminPassword) {
+        return res.json({ success: true });
+    }
+    return res.status(401).json({ success: false, message: '비밀번호가 틀렸습니다.' });
+});
+
 // =============================================
 // API 라우트
 // =============================================

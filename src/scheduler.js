@@ -27,11 +27,13 @@ async function runNewsletterJob() {
             return;
         }
 
-        console.log(`[Scheduler] Found ${articles.length} articles.`);
+        // 최대 20개 기사로 제한 (너무 많으면 스팸으로 오인받거나 메일이 깨짐)
+        const topArticles = articles.slice(0, 20);
+        console.log(`[Scheduler] Found ${articles.length} articles. Sending top ${topArticles.length}.`);
 
         // 2. 뉴스레터 발송
         console.log('\n[Scheduler] Step 2: Sending newsletter...');
-        const result = await sendNewsletterToAll(articles);
+        const result = await sendNewsletterToAll(topArticles);
 
         // 3. 발송 로그 저장
         addSendLog(

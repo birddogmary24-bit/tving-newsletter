@@ -33,42 +33,57 @@ function generateEmailTemplate(articles, date = new Date()) {
         weekday: 'long'
     });
 
-    const articleCards = articles.map(article => `
+    // 기사를 카테고리별로 다시 그룹화 (템플릿 렌더링용)
+    const grouped = {};
+    articles.forEach(article => {
+        if (!grouped[article.category]) grouped[article.category] = [];
+        grouped[article.category].push(article);
+    });
+
+    // 카테고리 순서 (이미 crawler에서 랜덤화해서 왔지만, 여기서 한번 더 보장)
+    const sortedCategories = Object.keys(grouped);
+
+    const categorySections = sortedCategories.map(cat => {
+        const items = grouped[cat].map(article => `
         <tr>
-            <td class="article-text" style="padding: 24px 0; border-bottom: 1px solid #2A2A2A;">
+            <td class="article-text" style="padding: 20px 0; border-bottom: 1px solid #2A2A2A;">
                 <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                         ${article.thumbnail ? `
-                        <td class="article-img" width="160" style="padding-right: 24px; vertical-align: top;">
-                            <a href="${article.url}" target="_blank" style="display: block; position: relative; overflow: hidden; border-radius: 12px; text-decoration: none;">
-                                <!-- Thumbnail -->
-                                <img src="${article.thumbnail}" alt="기사 썸네일" width="160" height="90" style="border-radius: 12px; object-fit: cover; display: block; border: 1px solid #333; background-color: #333;" />
-                                
-                                <!-- Play Button Overlay -->
-                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 32px; height: 32px; background-color: rgba(0,0,0,0.6); border-radius: 50%; text-align: center; line-height: 32px; border: 1px solid rgba(255,255,255,0.8);">
-                                    <span style="color: #FFFFFF; font-size: 14px; margin-left: 2px;">▶</span>
-                                </div>
+                        <td class="article-img" width="140" style="padding-right: 20px; vertical-align: top;">
+                            <a href="${article.url}" target="_blank" style="display: block; overflow: hidden; border-radius: 8px; text-decoration: none;">
+                                <img src="${article.thumbnail}" alt="기사" width="140" height="78" style="border-radius: 8px; object-fit: cover; display: block; border: 1px solid #333;" />
                             </a>
                         </td>
                         ` : ''}
                         <td style="vertical-align: top;">
                             <a href="${article.url}" target="_blank" style="text-decoration: none;">
-                                <h3 style="margin: 0 0 8px 0; font-size: 17px; font-weight: 700; color: #FFFFFF; line-height: 1.4; letter-spacing: -0.3px;">
-                                    ${article.title}
+                                <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #FFFFFF; line-height: 1.4; letter-spacing: -0.2px;">
+                                    ${article.thumbnail?.includes('/clip/') || article.title.includes('[영상') ? `<span style="display:inline-block; padding: 1px 4px; background:#FF153C; color:white; font-size:10px; border-radius:3px; margin-right:5px; vertical-align:middle;">VIDEO</span>` : ''}${article.title}
                                 </h3>
                             </a>
-                            <p style="margin: 0; font-size: 13px; color: #AAAAAA; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                ${article.description ? article.description.slice(0, 80) + '...' : ''}
+                            <p style="margin: 0; font-size: 12px; color: #999999; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                ${article.description ? article.description.slice(0, 100) + '...' : ''}
                             </p>
-                            <a href="${article.url}" target="_blank" style="display: inline-block; margin-top: 12px; font-size: 12px; color: #FF153C; text-decoration: none; font-weight: 600;">
-                                영상 재생 ▷
-                            </a>
                         </td>
                     </tr>
                 </table>
             </td>
         </tr>
-    `).join('');
+        `).join('');
+
+        return `
+        <!-- Category Section: ${cat} -->
+        <tr>
+            <td style="padding: 32px 0 8px 0;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #FF153C; border-left: 4px solid #FF153C; padding-left: 12px;">
+                    ${cat}
+                </h2>
+            </td>
+        </tr>
+        ${items}
+        `;
+    }).join('');
 
     return `
 <!DOCTYPE html>
@@ -126,11 +141,11 @@ function generateEmailTemplate(articles, date = new Date()) {
                         </td>
                     </tr>
                     
-                    <!-- Articles Card -->
+                    <!-- Articles Sections -->
                     <tr>
-                        <td class="card" style="background: #1A1A1A; border-radius: 24px; padding: 24px;">
+                        <td class="card" style="background: #1A1A1A; border-radius: 24px; padding: 0 24px 24px 24px;">
                             <table class="article-list" width="100%" cellpadding="0" cellspacing="0">
-                                ${articleCards}
+                                ${categorySections}
                             </table>
                         </td>
                     </tr>
@@ -272,3 +287,4 @@ module.exports = {
     sendNewsletterToAll,
     generateEmailTemplate
 };
+Pr

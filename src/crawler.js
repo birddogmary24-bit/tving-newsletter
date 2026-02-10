@@ -305,6 +305,29 @@ function sleep(ms) {
 }
 
 /**
+ * 최근 기사 크롤링 (역순 탐색 - 테스트/수동 발송용)
+ * @param {number} count - 가져올 기사 수
+ * @returns {Array} - 기사 목록
+ */
+async function crawlRecentArticles(count = 5) {
+    const lastId = getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
+    const startNum = parseArticleNum(lastId);
+    const articles = [];
+
+    console.log(`[Crawler] Fetching ${count} recent articles from ${lastId}...`);
+
+    for (let i = 0; articles.length < count && i < count * 3; i++) {
+        const articleId = formatArticleId(startNum - i);
+        const article = await fetchArticle(articleId);
+        if (article) articles.push(article);
+        if (i > 0) await sleep(200);
+    }
+
+    console.log(`[Crawler] Found ${articles.length} recent articles.`);
+    return articles;
+}
+
+/**
  * 테스트용: 특정 범위 기사 크롤링
  * @param {string} startId - 시작 ID
  * @param {string} endId - 종료 ID
@@ -351,6 +374,7 @@ if (require.main === module) {
 module.exports = {
     fetchArticle,
     crawlTodayArticles,
+    crawlRecentArticles,
     crawlArticleRange,
     getLatestArticles,
     formatArticleId,

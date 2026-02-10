@@ -11,7 +11,7 @@ require('dotenv').config();
 const { initDatabase, addSubscriber, getMaskedSubscribers, getSubscriberCount, deleteSubscriber, getActiveSubscribers, addSendLog, getSendLogs } = require('./database');
 const { encryptEmail, maskEmail, decryptEmail } = require('./crypto');
 const { startScheduler, runNewsletterJob } = require('./scheduler');
-const { fetchArticle, getLatestArticles } = require('./crawler');
+const { getLatestArticles } = require('./crawler');
 const { generateEmailTemplate, sendEmail } = require('./emailService');
 
 const app = express();
@@ -168,8 +168,8 @@ app.post('/api/subscribers/:id/test-send', async (req, res) => {
         const email = decryptEmail(subscriber.email_encrypted);
         console.log(`[Admin] Test send to ID ${id}: ${email}`);
 
-        // 최신 기사 30개 수집 (카테고리별 그룹화 포함)
-        const articles = await getLatestArticles(30);
+        // 최근 기사 5개 수집 (카테고리별 그룹화 포함)
+        const articles = await getLatestArticles(5);
 
         if (articles.length === 0) {
             return res.json({ success: false, message: '기사 수집 실패' });
@@ -181,7 +181,7 @@ app.post('/api/subscribers/:id/test-send', async (req, res) => {
 
         await sendEmail(email, subject, html);
 
-        res.json({ success: true, message: `${email}로 발송 완료!` });
+        res.json({ success: true, message: `${email}로 발송 완료! (기사 ${articles.length}건)` });
     } catch (error) {
         console.error('[TestSend] Error:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -196,8 +196,8 @@ app.post('/api/send-now', async (req, res) => {
     try {
         console.log('[Admin] Manual send triggered');
 
-        // 최신 기사 30개 수집 (카테고리별 그룹화 포함)
-        const articles = await getLatestArticles(30);
+        // 최근 기사 20개 수집 (카테고리별 그룹화 포함)
+        const articles = await getLatestArticles(20);
 
         if (articles.length === 0) {
             addSendLog(0, 0, 0, 'failed');
@@ -225,7 +225,7 @@ app.post('/api/send-now', async (req, res) => {
         addSendLog(subscribers.length, sent, articles.length, sent > 0 ? 'success' : 'failed');
 
         console.log(`[Admin] Sent to ${sent}/${subscribers.length} subscribers`);
-        res.json({ success: true, sent, total: subscribers.length });
+        res.json({ success: true, sent, total: subscribers.length, articles: articles.length });
     } catch (error) {
         console.error('[Send-Now] Error:', error);
         addSendLog(0, 0, 0, 'error');

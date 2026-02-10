@@ -4,7 +4,7 @@
  */
 
 const cron = require('node-cron');
-const { crawlTodayArticles } = require('./crawler');
+const { getLatestArticles } = require('./crawler');
 const { sendNewsletterToAll } = require('./emailService');
 const { addSendLog } = require('./database');
 
@@ -17,23 +17,20 @@ async function runNewsletterJob() {
     console.log('========================================\n');
 
     try {
-        // 1. 오늘 기사 크롤링
-        console.log('[Scheduler] Step 1: Crawling today articles...');
-        const articles = await crawlTodayArticles();
+        // 1. 최신 기사 20개 수집 (카테고리별 그룹화 포함)
+        console.log('[Scheduler] Step 1: Fetching latest articles...');
+        const articles = await getLatestArticles(20);
 
         if (articles.length === 0) {
-            console.log('[Scheduler] No new articles found. Skipping email send.');
-            // 기사가 없어도 시도는 했으므로 기록 (선택 사항, 여기서는 넘김)
+            console.log('[Scheduler] No articles found. Skipping email send.');
             return;
         }
 
-        // 최대 20개 기사로 제한 (너무 많으면 스팸으로 오인받거나 메일이 깨짐)
-        const topArticles = articles.slice(0, 20);
-        console.log(`[Scheduler] Found ${articles.length} articles. Sending top ${topArticles.length}.`);
+        console.log(`[Scheduler] Collected ${articles.length} articles for newsletter.`);
 
         // 2. 뉴스레터 발송
         console.log('\n[Scheduler] Step 2: Sending newsletter...');
-        const result = await sendNewsletterToAll(topArticles);
+        const result = await sendNewsletterToAll(articles);
 
         // 3. 발송 로그 저장
         addSendLog(

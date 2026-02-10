@@ -10,15 +10,12 @@ require('dotenv').config();
 
 const { initDatabase, addSubscriber, getMaskedSubscribers, getSubscriberCount, deleteSubscriber, getActiveSubscribers, addSendLog, getSendLogs } = require('./database');
 const { encryptEmail, maskEmail, decryptEmail } = require('./crypto');
-const { startScheduler, runNewsletterJob } = require('./scheduler');
+const { runNewsletterJob } = require('./scheduler');
 const { getLatestArticles } = require('./crawler');
 const { generateEmailTemplate, sendEmail } = require('./emailService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// 데이터베이스 초기화
-initDatabase();
 
 // 미들웨어
 app.use(cors());
@@ -33,7 +30,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
  * POST /api/subscribe
  * 이메일 구독 등록
  */
-app.post('/api/subscribe', (req, res) => {
+app.post('/api/subscribe', async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -53,13 +50,13 @@ app.post('/api/subscribe', (req, res) => {
         const maskedEmail = maskEmail(normalizedEmail);
 
         // DB 저장
-        const result = addSubscriber(encryptedEmail, maskedEmail);
+        const result = await addSubscriber(encryptedEmail, maskedEmail);
 
         if (result.success) {
             console.log(`[Subscribe] New subscriber: ${maskedEmail}`);
             return res.status(201).json({
                 success: true,
-                message: '구독이 완료되었습니다! 내일 오전 7:30에 첫 뉴스레터가 발송됩니다.'
+                message: '구독이 완료되었습니다! 매일 오전 7:45에 뉴스레터가 발송됩니다.'
             });
         } else {
             return res.status(409).json({
@@ -81,10 +78,10 @@ app.post('/api/subscribe', (req, res) => {
  * GET /api/subscribers
  * 구독자 목록 조회 (마스킹 버전 - 관리자용)
  */
-app.get('/api/subscribers', (req, res) => {
+app.get('/api/subscribers', async (req, res) => {
     try {
-        const subscribers = getMaskedSubscribers();
-        const count = getSubscriberCount();
+        const subscribers = await getMaskedSubscribers();
+        const count = await getSubscriberCount();
 
         res.json({
             success: true,
@@ -105,14 +102,14 @@ app.get('/api/subscribers', (req, res) => {
  * GET /api/stats
  * 서비스 통계
  */
-app.get('/api/stats', (req, res) => {
+app.get('/api/stats', async (req, res) => {
     try {
-        const count = getSubscriberCount();
+        const count = await getSubscriberCount();
 
         res.json({
             success: true,
             subscriberCount: count,
-            nextSend: '오전 7:30',
+            nextSend: '오전 7:45 (Cloud Scheduler)',
             status: 'active'
         });
 
@@ -137,10 +134,10 @@ app.get('/health', (req, res) => {
  * DELETE /api/subscribers/:id
  * 구독자 삭제
  */
-app.delete('/api/subscribers/:id', (req, res) => {
+app.delete('/api/subscribers/:id', async (req, res) => {
     try {
-        const id = parseInt(req.params.id);
-        deleteSubscriber(id);
+        const id = req.params.id;
+        await deleteSubscriber(id);
         console.log(`[Admin] Deleted subscriber ID: ${id}`);
         res.json({ success: true, message: '삭제되었습니다.' });
     } catch (error) {
@@ -155,10 +152,10 @@ app.delete('/api/subscribers/:id', (req, res) => {
  */
 app.post('/api/subscribers/:id/test-send', async (req, res) => {
     try {
-        const id = parseInt(req.params.id);
+        const id = req.params.id;
 
         // 구독자 찾기
-        const subscribers = getActiveSubscribers();
+        const subscribers = await getActiveSubscribers();
         const subscriber = subscribers.find(s => s.id === id);
 
         if (!subscriber) {
@@ -200,12 +197,12 @@ app.post('/api/send-now', async (req, res) => {
         const articles = await getLatestArticles(20);
 
         if (articles.length === 0) {
-            addSendLog(0, 0, 0, 'failed');
+            await addSendLog(0, 0, 0, 'failed');
             return res.json({ success: false, message: '수집된 기사가 없습니다.' });
         }
 
         // 구독자에게 발송
-        const subscribers = getActiveSubscribers();
+        const subscribers = await getActiveSubscribers();
         const today = new Date();
         const subject = `[TVING 뉴스] ${today.getMonth() + 1}월 ${today.getDate()}일 뉴스레터`;
         const html = generateEmailTemplate(articles, today);
@@ -222,13 +219,13 @@ app.post('/api/send-now', async (req, res) => {
         }
 
         // 발송 로그 저장
-        addSendLog(subscribers.length, sent, articles.length, sent > 0 ? 'success' : 'failed');
+        await addSendLog(subscribers.length, sent, articles.length, sent > 0 ? 'success' : 'failed');
 
         console.log(`[Admin] Sent to ${sent}/${subscribers.length} subscribers`);
         res.json({ success: true, sent, total: subscribers.length, articles: articles.length });
     } catch (error) {
         console.error('[Send-Now] Error:', error);
-        addSendLog(0, 0, 0, 'error');
+        await addSendLog(0, 0, 0, 'error');
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -237,9 +234,9 @@ app.post('/api/send-now', async (req, res) => {
  * GET /api/send-logs
  * 발송 내역 조회
  */
-app.get('/api/send-logs', (req, res) => {
+app.get('/api/send-logs', async (req, res) => {
     try {
-        const logs = getSendLogs(20);
+        const logs = await getSendLogs(20);
         res.json({ success: true, logs });
     } catch (error) {
         console.error('[SendLogs] Error:', error);
@@ -254,10 +251,100 @@ app.get('/api/send-logs', (req, res) => {
 app.get('/api/cron/send', async (req, res) => {
     try {
         console.log('[Cron] Newsletter trigger received');
-        await runNewsletterJob();
-        res.json({ success: true, message: 'Newsletter job started' });
+        const result = await runNewsletterJob();
+        if (result && result.skipped) {
+            res.json({ success: true, skipped: true, message: '오늘 이미 발송 완료 (KST)' });
+        } else {
+            res.json({ success: true, message: 'Newsletter sent successfully' });
+        }
     } catch (error) {
         console.error('[Cron] Job failed:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+/**
+ * GET /api/migrate-from-sqlite
+ * SQLite → Firestore 마이그레이션 (1회성)
+ */
+app.get('/api/migrate-from-sqlite', async (req, res) => {
+    try {
+        const initSqlJs = require('sql.js');
+        const fs = require('fs');
+        const DB_PATH = path.join(__dirname, '..', 'data', 'subscribers.db');
+
+        if (!fs.existsSync(DB_PATH)) {
+            return res.json({ success: false, message: 'SQLite DB 파일이 없습니다.' });
+        }
+
+        const SQL = await initSqlJs();
+        const buffer = fs.readFileSync(DB_PATH);
+        const sqliteDb = new SQL.Database(buffer);
+
+        const { getDb } = require('./database');
+        const firestoreDb = getDb();
+        const results = { subscribers: 0, settings: 0, send_logs: 0, skipped: 0 };
+
+        // 1. 구독자 마이그레이션
+        const subs = sqliteDb.exec('SELECT email_encrypted, email_masked, created_at, is_active FROM subscribers');
+        if (subs[0]) {
+            for (const row of subs[0].values) {
+                try {
+                    const existing = await firestoreDb.collection('subscribers')
+                        .where('email_encrypted', '==', row[0])
+                        .limit(1)
+                        .get();
+
+                    if (existing.empty) {
+                        await firestoreDb.collection('subscribers').add({
+                            email_encrypted: row[0],
+                            email_masked: row[1],
+                            created_at: row[2] || new Date().toISOString(),
+                            is_active: row[3] === 1 ? 1 : 0
+                        });
+                        results.subscribers++;
+                    } else {
+                        results.skipped++;
+                    }
+                } catch (e) {
+                    console.error('[Migrate] Subscriber error:', e.message);
+                }
+            }
+        }
+
+        // 2. 설정 마이그레이션
+        const settings = sqliteDb.exec('SELECT key, value FROM settings');
+        if (settings[0]) {
+            for (const row of settings[0].values) {
+                await firestoreDb.collection('settings').doc(row[0]).set({
+                    value: row[1],
+                    updated_at: new Date().toISOString()
+                });
+                results.settings++;
+            }
+        }
+
+        // 3. 발송 로그 마이그레이션
+        const logs = sqliteDb.exec('SELECT sent_at, total_subscribers, success_count, article_count, status FROM send_logs');
+        if (logs[0]) {
+            for (const row of logs[0].values) {
+                await firestoreDb.collection('send_logs').add({
+                    sent_at: row[0],
+                    total_subscribers: row[1],
+                    success_count: row[2],
+                    article_count: row[3],
+                    status: row[4]
+                });
+                results.send_logs++;
+            }
+        }
+
+        sqliteDb.close();
+
+        console.log('[Migrate] Migration complete:', results);
+        res.json({ success: true, message: '마이그레이션 완료', results });
+    } catch (error) {
+        console.error('[Migrate] Error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -280,12 +367,9 @@ async function startServer() {
         console.log('\n========================================');
         console.log('   TVING Newsletter Server Started');
         console.log('========================================');
-        console.log(`🚀 Server running at http://localhost:${PORT}`);
-        console.log(`📧 Newsletter scheduled for 07:30 AM daily`);
+        console.log(`Server running at http://localhost:${PORT}`);
+        console.log(`Newsletter trigger: Cloud Scheduler -> GET /api/cron/send`);
         console.log('========================================\n');
-
-        // 스케줄러 시작
-        startScheduler();
     });
 }
 

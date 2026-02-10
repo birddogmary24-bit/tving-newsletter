@@ -217,7 +217,7 @@ async function sendNewsletterToAll(articles) {
         return;
     }
 
-    const subscribers = getActiveSubscribers();
+    const subscribers = await getActiveSubscribers();
 
     if (subscribers.length === 0) {
         console.log('[Email] No subscribers.');

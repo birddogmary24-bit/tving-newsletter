@@ -173,7 +173,7 @@ async function crawlTodayArticles() {
     const articles = [];
 
     // 마지막으로 확인한 기사 ID 가져오기
-    let lastCheckedId = getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
+    let lastCheckedId = await getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
     let startNum = parseArticleNum(lastCheckedId);
 
     // 최대 600개 ID 탐색 (하루 200-500개 + 여유분)
@@ -212,7 +212,7 @@ async function crawlTodayArticles() {
     // 마지막 확인 ID 저장
     if (articles.length > 0) {
         const lastArticle = articles[articles.length - 1];
-        setSetting('last_article_id', lastArticle.id);
+        await setSetting('last_article_id', lastArticle.id);
         console.log(`[Crawler] Updated last_article_id to: ${lastArticle.id}`);
     }
 
@@ -229,7 +229,7 @@ async function getLatestArticles(totalLimit = 30) {
     console.log(`[Crawler] Fetching latest articles (goal: ${totalLimit})...`);
 
     // 1. 최신 ID 찾기
-    let currentId = getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
+    let currentId = await getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
     let currentNum = parseArticleNum(currentId);
 
     let latestNum = currentNum;
@@ -310,7 +310,7 @@ function sleep(ms) {
  * @returns {Array} - 기사 목록
  */
 async function crawlRecentArticles(count = 5) {
-    const lastId = getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
+    const lastId = await getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
     const startNum = parseArticleNum(lastId);
     const articles = [];
 

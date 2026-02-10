@@ -380,4 +380,3 @@ module.exports = {
     formatArticleId,
     parseArticleNum
 };
-Pr

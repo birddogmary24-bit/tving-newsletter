@@ -287,4 +287,3 @@ module.exports = {
     sendNewsletterToAll,
     generateEmailTemplate
 };
-Pr

@@ -7,7 +7,10 @@ const crypto = require('crypto');
 require('dotenv').config();
 
 const ALGORITHM = 'aes-256-cbc';
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-dev-key-replace-in-prod-32c';
+if (!process.env.ENCRYPTION_KEY) {
+    throw new Error('ENCRYPTION_KEY 환경변수가 설정되지 않았습니다.');
+}
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 const IV_LENGTH = 16;
 
 /**

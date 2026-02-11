@@ -225,7 +225,7 @@
         <!-- 로그인 폼 -->
         <div class="login-form active" id="loginForm">
             <div class="login-box">
-                <h2>🔐 관리자 로그인</h2>
+                <h2>관리자 로그인</h2>
                 <input type="password" id="password" placeholder="비밀번호 입력">
                 <button class="btn-primary" onclick="login()">로그인</button>
                 <p id="loginError" style="color: #dc3545; text-align: center; display: none;">비밀번호가 틀렸습니다</p>
@@ -255,17 +255,16 @@
 
             <!-- 수동 발송 -->
             <div class="section actions">
-                <h3>📧 수동 뉴스레터 발송</h3>
+                <h3>수동 뉴스레터 발송</h3>
                 <button class="btn-success" onclick="sendNewsletter()">지금 발송하기</button>
             </div>
 
             <!-- 구독자 목록 -->
             <div class="section">
-                <h3>👥 구독자 목록</h3>
+                <h3>구독자 목록</h3>
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>이메일 (마스킹)</th>
                             <th>가입일</th>
                             <th>상태</th>
@@ -279,7 +278,7 @@
 
             <!-- 발송 내역 -->
             <div class="section">
-                <h3>📬 발송 내역</h3>
+                <h3>발송 내역</h3>
                 <table>
                     <thead>
                         <tr>
@@ -298,6 +297,29 @@
     </div>
 
     <script>
+        let adminToken = sessionStorage.getItem('adminToken');
+
+        function authHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + adminToken
+            };
+        }
+
+        // 페이지 로드 시 토큰이 있으면 자동 로그인 시도
+        if (adminToken) {
+            fetch('/api/subscribers', { headers: authHeaders() })
+                .then(r => { if (r.ok) { showAdmin(); } else { sessionStorage.removeItem('adminToken'); adminToken = null; } })
+                .catch(() => { sessionStorage.removeItem('adminToken'); adminToken = null; });
+        }
+
+        function showAdmin() {
+            document.getElementById('loginForm').classList.remove('active');
+            document.getElementById('adminPanel').classList.add('active');
+            loadSubscribers();
+            loadSendLogs();
+        }
+
         async function login() {
             const password = document.getElementById('password').value;
 
@@ -310,10 +332,9 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    document.getElementById('loginForm').classList.remove('active');
-                    document.getElementById('adminPanel').classList.add('active');
-                    loadSubscribers();
-                    loadSendLogs();
+                    adminToken = data.token;
+                    sessionStorage.setItem('adminToken', adminToken);
+                    showAdmin();
                 } else {
                     document.getElementById('loginError').style.display = 'block';
                     document.getElementById('loginError').textContent = data.message;
@@ -324,7 +345,10 @@
             }
         }
 
-        function logout() {
+        async function logout() {
+            await fetch('/api/admin/logout', { method: 'POST', headers: authHeaders() }).catch(() => {});
+            adminToken = null;
+            sessionStorage.removeItem('adminToken');
             document.getElementById('adminPanel').classList.remove('active');
             document.getElementById('loginForm').classList.add('active');
             document.getElementById('password').value = '';
@@ -339,7 +363,8 @@
 
         async function loadSubscribers() {
             try {
-                const res = await fetch('/api/subscribers');
+                const res = await fetch('/api/subscribers', { headers: authHeaders() });
+                if (res.status === 401) { logout(); return; }
                 const data = await res.json();
 
                 document.getElementById('totalSubscribers').textContent = data.total;
@@ -349,15 +374,14 @@
                 const tbody = document.getElementById('subscriberList');
                 tbody.innerHTML = data.subscribers.map(s => `
                     <tr>
-                        <td>${s.id}</td>
                         <td>${s.email_masked}</td>
                         <td>${s.created_at}</td>
                         <td class="${s.is_active ? 'status-active' : 'status-inactive'}">
                             ${s.is_active ? '활성' : '비활성'}
                         </td>
                         <td>
-                            <button class="btn-info" onclick="testSendToSubscriber(${s.id})">테스트</button>
-                            <button class="btn-danger" onclick="deleteSubscriber(${s.id})">삭제</button>
+                            <button class="btn-info" onclick="testSendToSubscriber('${s.id}')">테스트</button>
+                            <button class="btn-danger" onclick="deleteSubscriber('${s.id}')">삭제</button>
                         </td>
                     </tr>
                 `).join('');
@@ -368,7 +392,8 @@
 
         async function loadSendLogs() {
             try {
-                const res = await fetch('/api/send-logs');
+                const res = await fetch('/api/send-logs', { headers: authHeaders() });
+                if (res.status === 401) { logout(); return; }
                 const data = await res.json();
 
                 const tbody = document.getElementById('sendLogList');
@@ -384,7 +409,7 @@
                         <td>${log.success_count}명</td>
                         <td>${log.article_count}건</td>
                         <td class="${log.status === 'success' ? 'status-active' : 'status-inactive'}">
-                            ${log.status === 'success' ? '✅ 성공' : '❌ 실패'}
+                            ${log.status === 'success' ? '성공' : '실패'}
                         </td>
                     </tr>
                 `).join('');
@@ -397,7 +422,8 @@
             if (!confirm('정말 삭제하시겠습니까?')) return;
 
             try {
-                const res = await fetch('/api/subscribers/' + id, { method: 'DELETE' });
+                const res = await fetch('/api/subscribers/' + id, { method: 'DELETE', headers: authHeaders() });
+                if (res.status === 401) { logout(); return; }
                 const data = await res.json();
 
                 if (data.success) {
@@ -417,12 +443,13 @@
             showMessage('발송 중...', 'success');
 
             try {
-                const res = await fetch('/api/send-now', { method: 'POST' });
+                const res = await fetch('/api/send-now', { method: 'POST', headers: authHeaders() });
+                if (res.status === 401) { logout(); return; }
                 const data = await res.json();
 
                 if (data.success) {
-                    showMessage(`✅ ${data.sent}명에게 발송 완료!`, 'success');
-                    loadSendLogs();  // 발송 후 로그 새로고침
+                    showMessage(`${data.sent}명에게 발송 완료!`, 'success');
+                    loadSendLogs();
                 } else {
                     showMessage('발송 실패: ' + data.message, 'error');
                 }
@@ -437,11 +464,12 @@
             showMessage('테스트 발송 중...', 'success');
 
             try {
-                const res = await fetch(`/api/subscribers/${id}/test-send`, { method: 'POST' });
+                const res = await fetch(`/api/subscribers/${id}/test-send`, { method: 'POST', headers: authHeaders() });
+                if (res.status === 401) { logout(); return; }
                 const data = await res.json();
 
                 if (data.success) {
-                    showMessage(`✅ ${data.message}`, 'success');
+                    showMessage(data.message, 'success');
                 } else {
                     showMessage('발송 실패: ' + data.message, 'error');
                 }

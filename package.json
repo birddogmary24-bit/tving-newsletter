@@ -16,8 +16,7 @@
     "cheerio": "^1.0.0-rc.12",
     "nodemailer": "^6.9.7",
     "dotenv": "^16.3.1",
-    "cors": "^2.8.5",
-    "sql.js": "^1.10.3"
+    "cors": "^2.8.5"
   },
   "keywords": [
     "tving",

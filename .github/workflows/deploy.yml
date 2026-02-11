@@ -37,6 +37,7 @@ jobs:
             EMAIL_USER=${{ secrets.EMAIL_USER }}
             EMAIL_PASS=${{ secrets.EMAIL_PASS }}
             ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
+            ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
             GCP_PROJECT_ID=${{ env.PROJECT_ID }}
 
       - name: Show URL

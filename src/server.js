@@ -102,7 +102,7 @@ app.post('/api/subscribe', async (req, res) => {
             console.log(`[Subscribe] New subscriber: ${maskedEmail}`);
             return res.status(201).json({
                 success: true,
-                message: '구독이 완료되었습니다! 매일 오전 7:45에 뉴스레터가 발송됩니다.'
+                message: '구독이 완료되었습니다! 매일 오전 7:30에 뉴스레터가 발송됩니다.'
             });
         } else {
             return res.status(409).json({
@@ -131,7 +131,7 @@ app.get('/api/stats', async (req, res) => {
         res.json({
             success: true,
             subscriberCount: count,
-            nextSend: '오전 7:45 (Cloud Scheduler)',
+            nextSend: '오전 7:30 (Cloud Scheduler)',
             status: 'active'
         });
 

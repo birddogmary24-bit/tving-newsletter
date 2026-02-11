@@ -33,152 +33,170 @@ function generateEmailTemplate(articles, date = new Date()) {
         weekday: 'long'
     });
 
-    // 기사를 카테고리별로 다시 그룹화 (템플릿 렌더링용)
+    // 기사를 카테고리별로 그룹화
     const grouped = {};
     articles.forEach(article => {
         if (!grouped[article.category]) grouped[article.category] = [];
         grouped[article.category].push(article);
     });
 
-    // 카테고리 순서 (이미 crawler에서 랜덤화해서 왔지만, 여기서 한번 더 보장)
     const sortedCategories = Object.keys(grouped);
 
     const categorySections = sortedCategories.map(cat => {
-        const items = grouped[cat].map(article => `
-        <tr>
-            <td class="article-text" style="padding: 20px 0; border-bottom: 1px solid #2A2A2A;">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                        ${article.thumbnail ? `
-                        <td class="article-img" width="140" style="padding-right: 20px; vertical-align: top;">
-                            <a href="${article.url}" target="_blank" style="display: block; overflow: hidden; border-radius: 8px; text-decoration: none;">
-                                <img src="${article.thumbnail}" alt="기사" width="140" height="78" style="border-radius: 8px; object-fit: cover; display: block; border: 1px solid #333;" />
-                            </a>
-                        </td>
-                        ` : ''}
-                        <td style="vertical-align: top;">
-                            <a href="${article.url}" target="_blank" style="text-decoration: none;">
-                                <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #FFFFFF; line-height: 1.4; letter-spacing: -0.2px;">
-                                    ${article.thumbnail?.includes('/clip/') || article.title.includes('[영상') ? `<span style="display:inline-block; padding: 1px 4px; background:#FF153C; color:white; font-size:10px; border-radius:3px; margin-right:5px; vertical-align:middle;">VIDEO</span>` : ''}${article.title}
-                                </h3>
-                            </a>
-                            <p style="margin: 0; font-size: 12px; color: #999999; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                ${article.description ? article.description.slice(0, 100) + '...' : ''}
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        `).join('');
+        const items = grouped[cat].map(article => {
+            const desc = article.description ? article.description.slice(0, 120) : '';
+            const isVideo = (article.thumbnail && article.thumbnail.includes('/clip/')) || article.title.includes('[영상');
+            const videoBadge = isVideo ? '<span style="display:inline-block;padding:2px 6px;background-color:#FF153C;color:#ffffff;font-size:10px;border-radius:3px;margin-right:6px;vertical-align:middle;line-height:14px;">VIDEO</span>' : '';
+
+            return `
+            <tr>
+                <td style="padding:16px 0;border-bottom:1px solid #333333;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            ${article.thumbnail ? `
+                            <td width="120" valign="top" style="padding-right:16px;">
+                                <a href="${article.url}" target="_blank" style="text-decoration:none;">
+                                    <img src="${article.thumbnail}" alt="" width="120" height="68" style="display:block;border-radius:6px;object-fit:cover;border:0;" />
+                                </a>
+                            </td>` : ''}
+                            <td valign="top">
+                                <a href="${article.url}" target="_blank" style="text-decoration:none;">
+                                    <span style="font-size:15px;font-weight:600;color:#FFFFFF;line-height:22px;">
+                                        ${videoBadge}${article.title}
+                                    </span>
+                                </a>
+                                ${desc ? `<p style="margin:6px 0 0 0;font-size:13px;color:#999999;line-height:20px;">${desc}</p>` : ''}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>`;
+        }).join('');
 
         return `
-        <!-- Category Section: ${cat} -->
-        <tr>
-            <td style="padding: 32px 0 8px 0;">
-                <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #FF153C; border-left: 4px solid #FF153C; padding-left: 12px;">
-                    ${cat}
-                </h2>
-            </td>
-        </tr>
-        ${items}
-        `;
+            <tr>
+                <td style="padding:28px 0 10px 0;">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td width="4" style="background-color:#FF153C;">&nbsp;</td>
+                            <td style="padding-left:10px;font-size:16px;font-weight:700;color:#FF153C;">${cat}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            ${items}`;
     }).join('');
 
-    return `
-<!DOCTYPE html>
-<html lang="ko">
+    return `<!DOCTYPE html>
+<html lang="ko" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>TVING 뉴스레터</title>
+    <!--[if mso]>
+    <style>
+        table { border-collapse: collapse; }
+        td { font-family: Arial, sans-serif; }
+    </style>
+    <![endif]-->
     <style>
         @media screen and (max-width: 480px) {
-            .container { width: 100% !important; padding: 0 10px !important; }
-            .card { padding: 20px 16px !important; border-radius: 16px !important; }
-            .article-list td { display: block; width: 100% !important; padding: 0 !important; }
-            .article-img { width: 100% !important; height: auto !important; margin-bottom: 12px; }
-            .article-img img { width: 100% !important; height: auto !important; aspect-ratio: 16/9; }
-            .article-text { padding-bottom: 24px !important; border-bottom: 1px solid #2A2A2A; margin-bottom: 16px; }
-            .cta-button { width: 100% !important; display: block !important; box-sizing: border-box; text-align: center; }
-            h1 { font-size: 24px !important; }
-            h2 { font-size: 20px !important; }
+            .outer-table { width: 100% !important; }
+            .inner-pad { padding: 0 12px !important; }
+            .card-pad { padding: 16px !important; }
+            .thumb-cell { display: block !important; width: 100% !important; padding: 0 0 10px 0 !important; }
+            .thumb-cell img { width: 100% !important; height: auto !important; }
+            .text-cell { display: block !important; width: 100% !important; }
         }
     </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0D0D0D; font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0D0D0D;">
+<body style="margin:0;padding:0;background-color:#111111;-webkit-text-size-adjust:none;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#111111" style="background-color:#111111;">
         <tr>
-            <td align="center" style="padding: 40px 0;">
-                <table class="container" width="100%" style="max-width: 600px; margin: 0 auto;" cellpadding="0" cellspacing="0">
-                    
+            <td align="center" style="padding:32px 0;">
+                <table class="outer-table" width="580" cellpadding="0" cellspacing="0" border="0" style="max-width:580px;width:100%;">
+
                     <!-- Header -->
                     <tr>
-                        <td style="padding: 0 0 32px 0; text-align: center;">
-                            <h1 style="margin: 0; font-size: 28px; font-weight: 900; color: #FF153C; letter-spacing: -0.5px;">TVING</h1>
-                            <p style="margin: 6px 0 0 0; font-size: 13px; color: #888888; font-weight: 500;">Newsletter</p>
+                        <td align="center" style="padding:0 0 28px 0;">
+                            <span style="font-size:26px;font-weight:900;color:#FF153C;letter-spacing:-0.5px;">TVING</span>
+                            <br>
+                            <span style="font-size:12px;color:#888888;letter-spacing:1px;">NEWSLETTER</span>
                         </td>
                     </tr>
-                    
-                    <!-- Date Badge -->
+
+                    <!-- Date -->
                     <tr>
-                        <td style="padding: 0 0 24px 0; text-align: center;">
-                            <span style="display: inline-block; padding: 6px 14px; background: rgba(255, 21, 60, 0.1); border: 1px solid rgba(255, 21, 60, 0.2); border-radius: 50px; font-size: 12px; color: #FF153C; font-weight: 600;">
-                                ${formattedDate}
-                            </span>
-                        </td>
-                    </tr>
-                    
-                    <!-- Intro -->
-                    <tr>
-                        <td style="padding: 0 0 32px 0; text-align: center;">
-                            <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.5px;">
-                                오늘의 하이라이트
-                            </h2>
-                            <p style="margin: 0; font-size: 14px; color: #888888; line-height: 1.5;">
-                                엄선된 ${articles.length}개의 뉴스를 전해드립니다
-                            </p>
-                        </td>
-                    </tr>
-                    
-                    <!-- Articles Sections -->
-                    <tr>
-                        <td class="card" style="background: #1A1A1A; border-radius: 24px; padding: 0 24px 24px 24px;">
-                            <table class="article-list" width="100%" cellpadding="0" cellspacing="0">
-                                ${categorySections}
+                        <td align="center" style="padding:0 0 24px 0;">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="padding:6px 16px;background-color:#1F1111;border:1px solid #3A1520;border-radius:20px;font-size:12px;color:#FF153C;font-weight:600;">
+                                        ${formattedDate}
+                                    </td>
+                                </tr>
                             </table>
                         </td>
                     </tr>
-                    
+
+                    <!-- Intro -->
+                    <tr>
+                        <td align="center" style="padding:0 0 28px 0;">
+                            <span style="font-size:20px;font-weight:700;color:#FFFFFF;">오늘의 하이라이트</span>
+                            <br>
+                            <span style="font-size:13px;color:#888888;line-height:24px;">엄선된 ${articles.length}개의 뉴스를 전해드립니다</span>
+                        </td>
+                    </tr>
+
+                    <!-- Articles Card -->
+                    <tr>
+                        <td class="inner-pad">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1A1A1A" style="background-color:#1A1A1A;border-radius:12px;">
+                                <tr>
+                                    <td class="card-pad" style="padding:8px 24px 24px 24px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            ${categorySections}
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
                     <!-- CTA Button -->
                     <tr>
-                        <td style="padding: 32px 0; text-align: center;">
-                            <a href="https://www.tving.com/news" target="_blank" class="cta-button"
-                                style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #FF153C 0%, #E50914 100%); color: #FFFFFF; text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 12px rgba(255, 21, 60, 0.3);">
-                                전체 뉴스 보러가기 →
-                            </a>
+                        <td align="center" style="padding:28px 0;">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td align="center" bgcolor="#FF153C" style="background-color:#FF153C;border-radius:8px;">
+                                        <a href="https://www.tving.com/news" target="_blank" style="display:inline-block;padding:14px 36px;color:#FFFFFF;text-decoration:none;font-size:14px;font-weight:700;">
+                                            전체 뉴스 보러가기 &rarr;
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
-                    
+
                     <!-- Footer -->
                     <tr>
-                        <td style="padding: 32px 20px 40px; border-top: 1px solid #1F1F1F; text-align: center;">
-                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #555555;">
+                        <td style="padding:24px 20px 32px;border-top:1px solid #222222;" align="center">
+                            <span style="font-size:11px;color:#555555;line-height:18px;">
                                 본 메일은 TVING 뉴스레터 구독을 통해 발송되었습니다.
-                            </p>
-                            <p style="margin: 0; font-size: 11px; color: #444444;">
-                                서울특별시 마포구 상암산로 34, DMC디지털큐브 15층(상암동) | 티빙(주)
-                            </p>
+                            </span>
+                            <br>
+                            <span style="font-size:11px;color:#444444;line-height:18px;">
+                                서울특별시 마포구 상암산로 34, DMC디지털큐브 15층 | 티빙(주)
+                            </span>
                         </td>
                     </tr>
-                    
+
                 </table>
             </td>
         </tr>
     </table>
 </body>
-</html>
-    `;
+</html>`;
 }
 
 /**

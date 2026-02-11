@@ -54,12 +54,12 @@ function generateEmailTemplate(articles, date = new Date()) {
                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                         <tr>
                             ${article.thumbnail ? `
-                            <td width="120" valign="top" style="padding-right:16px;">
+                            <td class="thumb-cell" width="120" valign="top" style="padding-right:16px;">
                                 <a href="${article.url}" target="_blank" style="text-decoration:none;">
                                     <img src="${article.thumbnail}" alt="" width="120" height="68" style="display:block;border-radius:6px;object-fit:cover;border:0;" />
                                 </a>
                             </td>` : ''}
-                            <td valign="top">
+                            <td class="text-cell" valign="top">
                                 <a href="${article.url}" target="_blank" style="text-decoration:none;">
                                     <span style="font-size:15px;font-weight:600;color:#FFFFFF;line-height:22px;">
                                         ${videoBadge}${article.title}

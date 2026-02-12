@@ -11,7 +11,7 @@ const swaggerSpec = {
         description: '티빙 뉴스레터 구독 서비스 API — 매일 오전 7:30 뉴스 기사 이메일 발송 (Cloud Scheduler)',
     },
     servers: [
-        { url: 'http://localhost:3000', description: 'Local' },
+        { url: 'https://tving-newsletter-qubflbhgfq-du.a.run.app', description: 'Cloud Run (Production)' },
     ],
     tags: [
         { name: 'Public', description: '공개 API' },

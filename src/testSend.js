@@ -9,7 +9,7 @@ const { fetchArticle } = require('./crawler');
 const { generateEmailTemplate } = require('./emailService');
 
 const TEST_RECIPIENTS = [
-    'triones24@gmail.com'
+    process.env.TEST_EMAIL || process.env.EMAIL_USER
 ];
 
 async function runManualTest() {

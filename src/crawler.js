@@ -173,7 +173,7 @@ async function crawlTodayArticles() {
     const articles = [];
 
     // 마지막으로 확인한 기사 ID 가져오기
-    let lastCheckedId = await getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
+    let lastCheckedId = await getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000142400';
     let startNum = parseArticleNum(lastCheckedId);
 
     // 최대 600개 ID 탐색 (하루 200-500개 + 여유분)
@@ -229,7 +229,7 @@ async function getLatestArticles(totalLimit = 30) {
     console.log(`[Crawler] Fetching latest articles (goal: ${totalLimit})...`);
 
     // 1. 최신 ID 찾기
-    let currentId = await getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
+    let currentId = await getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000142400';
     let currentNum = parseArticleNum(currentId);
 
     let latestNum = currentNum;
@@ -245,6 +245,13 @@ async function getLatestArticles(totalLimit = 30) {
             consecutiveNotFound++;
             if (consecutiveNotFound >= 10) break;
         }
+    }
+
+    // 최신 ID를 Firestore에 저장 (다음 실행 시 여기서부터 탐색)
+    if (latestNum > currentNum) {
+        const latestId = formatArticleId(latestNum);
+        await setSetting('last_article_id', latestId);
+        console.log(`[Crawler] Updated last_article_id to: ${latestId}`);
     }
 
     // 2. 충분한 양의 기사를 수집 (카테고리별 그룹화를 위해 목표의 2.5배 정도 수집)
@@ -310,7 +317,7 @@ function sleep(ms) {
  * @returns {Array} - 기사 목록
  */
 async function crawlRecentArticles(count = 5) {
-    const lastId = await getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000136232';
+    const lastId = await getSetting('last_article_id') || process.env.LATEST_ARTICLE_ID || 'A00000142400';
     const startNum = parseArticleNum(lastId);
     const articles = [];
 

@@ -8,6 +8,8 @@ const crypto = require('crypto');
 const path = require('path');
 require('dotenv').config();
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 const { initDatabase, addSubscriber, getMaskedSubscribers, getSubscriberCount, deleteSubscriber, getActiveSubscribers, addSendLog, getSendLogs } = require('./database');
 const { encryptEmail, maskEmail, decryptEmail } = require('./crypto');
 const { runNewsletterJob } = require('./scheduler');
@@ -19,6 +21,7 @@ const PORT = process.env.PORT || 3000;
 
 // 미들웨어
 app.use(express.json());
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // =============================================

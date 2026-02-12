@@ -44,9 +44,7 @@ function generateEmailTemplate(articles, date = new Date()) {
 
     const categorySections = sortedCategories.map(cat => {
         const items = grouped[cat].map(article => {
-            const desc = article.description ? article.description.slice(0, 120) : '';
-            const isVideo = (article.thumbnail && article.thumbnail.includes('/clip/')) || article.title.includes('[영상');
-            const videoBadge = isVideo ? '<span style="display:inline-block;padding:2px 6px;background-color:#FF153C;color:#ffffff;font-size:10px;border-radius:3px;margin-right:6px;vertical-align:middle;line-height:14px;">VIDEO</span>' : '';
+            const desc = article.description ? article.description.slice(0, 60) : '';
 
             return `
             <tr>
@@ -54,7 +52,7 @@ function generateEmailTemplate(articles, date = new Date()) {
                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                         <tr>
                             ${article.thumbnail ? `
-                            <td class="thumb-cell" width="120" valign="top" style="padding-right:16px;">
+                            <td class="thumb-cell" width="120" valign="top" style="padding-right:16px;padding-bottom:10px;">
                                 <a href="${article.url}" target="_blank" style="text-decoration:none;">
                                     <img src="${article.thumbnail}" alt="" width="120" height="68" style="display:block;border-radius:6px;object-fit:cover;border:0;" />
                                 </a>
@@ -62,7 +60,7 @@ function generateEmailTemplate(articles, date = new Date()) {
                             <td class="text-cell" valign="top">
                                 <a href="${article.url}" target="_blank" style="text-decoration:none;">
                                     <span style="font-size:15px;font-weight:600;color:#FFFFFF;line-height:22px;">
-                                        ${videoBadge}${article.title}
+                                        ${article.title}
                                     </span>
                                 </a>
                                 ${desc ? `<p style="margin:6px 0 0 0;font-size:13px;color:#999999;line-height:20px;">${desc}</p>` : ''}
@@ -111,10 +109,11 @@ function generateEmailTemplate(articles, date = new Date()) {
         }
     </style>
 </head>
-<body style="margin:0;padding:0;background-color:#111111;-webkit-text-size-adjust:none;">
+<body bgcolor="#111111" style="margin:0;padding:0;background-color:#111111;-webkit-text-size-adjust:none;">
+    <div style="background-color:#111111;width:100%;margin:0;padding:0;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#111111" style="background-color:#111111;">
         <tr>
-            <td align="center" style="padding:32px 0;">
+            <td align="center" bgcolor="#111111" style="padding:32px 0;background-color:#111111;">
                 <table class="outer-table" width="580" cellpadding="0" cellspacing="0" border="0" style="max-width:580px;width:100%;">
 
                     <!-- Header -->
@@ -195,6 +194,7 @@ function generateEmailTemplate(articles, date = new Date()) {
             </td>
         </tr>
     </table>
+    </div>
 </body>
 </html>`;
 }

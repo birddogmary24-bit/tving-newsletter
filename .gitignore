@@ -4,6 +4,17 @@ package-lock.json
 
 # Environment variables
 .env
+.env.*
+.env*.local
+.env.local
+.env.production
+
+# security - keys and credentials
+*.pem
+*.p12
+*-sa-key.json
+*credentials*.json
+*.secret
 
 # Database (민감한 구독자 정보)
 data/

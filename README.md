@@ -215,7 +215,7 @@ tving-newsletter/
 
 ### 이메일 마스킹
 ```
-triones24@gmail.com → tri***@gmail.com
+your.email@example.com → tri***@gmail.com
 ```
 
 ---
@@ -387,7 +387,7 @@ MIT License
 ## 📬 문의
 
 - GitHub Issues: [이슈 생성](https://github.com/your-repo/issues)
-- Email: triones24@gmail.com
+- Email: your.email@example.com
 
 ---
 

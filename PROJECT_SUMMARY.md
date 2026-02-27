@@ -293,7 +293,7 @@ tving-newsletter/
 
 **프로젝트 상태:** 🟢 **운영 중**
 **다음 리뷰:** 2주 후 (2026-02-27)
-**담당자:** triones24@gmail.com
+**담당자:** your.email@example.com
 
 ---
 

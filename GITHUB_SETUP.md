@@ -2,7 +2,7 @@
 
 ## 1단계: GitHub 저장소 생성
 
-1. https://github.com 접속 (birddogmary24 계정으로 로그인)
+1. https://github.com 접속 (your-github-username 계정으로 로그인)
 2. 우측 상단 `+` 버튼 → `New repository` 클릭
 3. 저장소 설정:
    - **Repository name**: `tving-newsletter`
@@ -15,7 +15,7 @@
 
 ```bash
 cd /Users/waynepark/Documents/AI/tving-newsletter
-git remote add origin https://github.com/birddogmary24/tving-newsletter.git
+git remote add origin https://github.com/your-github-username/tving-newsletter.git
 git branch -M main
 git push -u origin main
 ```
@@ -24,7 +24,7 @@ git push -u origin main
 
 ```bash
 # 최초 클론
-git clone https://github.com/birddogmary24/tving-newsletter.git
+git clone https://github.com/your-github-username/tving-newsletter.git
 cd tving-newsletter
 
 # .env 파일 생성 (수동)

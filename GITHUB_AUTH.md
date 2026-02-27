@@ -6,7 +6,7 @@ GitHub 푸시 시 인증 오류가 발생했습니다.
 ## 해결 방법: Personal Access Token 사용
 
 ### 1단계: GitHub에서 저장소 생성 확인
-1. https://github.com/birddogmary24 접속
+1. https://github.com/your-github-username 접속
 2. Repositories 탭에서 `tving-newsletter` 저장소가 있는지 확인
 3. 없다면 생성:
    - New repository 클릭
@@ -33,7 +33,7 @@ GitHub 푸시 시 인증 오류가 발생했습니다.
 cd /Users/waynepark/Documents/AI/tving-newsletter
 
 # 원격 저장소 URL을 토큰 포함 형식으로 변경
-git remote set-url origin https://YOUR_TOKEN@github.com/birddogmary24/tving-newsletter.git
+git remote set-url origin https://YOUR_TOKEN@github.com/your-github-username/tving-newsletter.git
 
 # 푸시
 git push -u origin main
@@ -43,7 +43,7 @@ git push -u origin main
 
 ### 4단계: 다른 컴퓨터에서 클론
 ```bash
-git clone https://YOUR_TOKEN@github.com/birddogmary24/tving-newsletter.git
+git clone https://YOUR_TOKEN@github.com/your-github-username/tving-newsletter.git
 ```
 
 ## 보안 주의사항

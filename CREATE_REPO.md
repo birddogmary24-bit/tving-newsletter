@@ -7,7 +7,7 @@
 ## 📝 저장소 생성 단계
 
 ### 1. GitHub 접속
-https://github.com/birddogmary24
+https://github.com/your-github-username
 
 ### 2. New Repository 클릭
 우측 상단 `+` 버튼 → `New repository`

@@ -140,7 +140,7 @@ Description: 티빙 뉴스레터 배포, 모니터링, GitHub 관리 전문
 - 외부 IP: 35.233.181.166
 - 포트: 3000
 - 프로세스 관리: PM2
-- GitHub: https://github.com/birddogmary24-bit/tving-newsletter
+- GitHub: https://github.com/your-github-username-bit/tving-newsletter
 
 ## 배포 프로세스
 1. 로컬 테스트 확인

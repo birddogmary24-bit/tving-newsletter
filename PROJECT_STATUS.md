@@ -183,7 +183,7 @@ Staged Files: .agent/agent-configs.md (새 파일)
 ### 환경 설정
 ```env
 ✅ ENCRYPTION_KEY: tving-newsletter-secret-key-32c
-✅ EMAIL_USER: triones24@gmail.com
+✅ EMAIL_USER: your.email@example.com
 ✅ EMAIL_PASS: tafqhasnptckctfa (Gmail 앱 비밀번호)
 ✅ PORT: 3000
 ✅ LATEST_ARTICLE_ID: A00000136232

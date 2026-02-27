@@ -671,7 +671,7 @@ function maskEmail(email) {
   return masked + '@' + domain;
 }
 
-// 예: triones24@gmail.com → tri***@gmail.com
+// 예: your.email@example.com → tri***@gmail.com
 ```
 
 ### 7.3 Admin Authentication

@@ -30,7 +30,7 @@ GitHub 푸시 시 인증 오류가 발생했습니다.
 터미널에서 실행:
 
 ```bash
-cd /Users/waynepark/Documents/AI/tving-newsletter
+cd /path/to/your/project/dir/tving-newsletter
 
 # 원격 저장소 URL을 토큰 포함 형식으로 변경
 git remote set-url origin https://YOUR_TOKEN@github.com/your-github-username/tving-newsletter.git

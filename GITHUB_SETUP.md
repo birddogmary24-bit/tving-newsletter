@@ -14,7 +14,7 @@
 ## 2단계: 원격 저장소 연결 (저장소 생성 후 실행)
 
 ```bash
-cd /Users/waynepark/Documents/AI/tving-newsletter
+cd /path/to/your/project/dir/tving-newsletter
 git remote add origin https://github.com/your-github-username/tving-newsletter.git
 git branch -M main
 git push -u origin main

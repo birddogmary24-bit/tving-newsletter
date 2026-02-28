@@ -381,7 +381,7 @@ describe('Crawler', () => {
 
 **로컬 실행 방법:**
 ```bash
-cd /Users/waynepark/Documents/AI\ project/AI/tving-newsletter
+cd /path/to/your/project/dir/AI/tving-newsletter
 npm start
 # 또는
 node src/server.js

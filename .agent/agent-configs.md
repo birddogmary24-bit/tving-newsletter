@@ -26,7 +26,7 @@ Description: 티빙 뉴스레터 백엔드 개발 전문 (API, DB, 크롤링)
 - 스케줄러 관리 (src/scheduler.js)
 
 ## 프로젝트 정보
-- 경로: /Users/waynepark/Documents/AI/tving-newsletter
+- 경로: /path/to/your/project/dir/tving-newsletter
 - 기술: Node.js, Express, SQLite (sql.js), Nodemailer
 - 크롤링 대상: https://www.tving.com/news
 

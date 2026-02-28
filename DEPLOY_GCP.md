@@ -90,7 +90,7 @@ sudo npm install -g pm2
 ### 로컬에서 GCP로 파일 전송:
 ```bash
 # 로컬 터미널에서 실행
-cd /Users/waynepark/Documents/AI
+cd /path/to/your/project/dir
 
 # 압축
 zip -r tving-newsletter.zip tving-newsletter -x "*/node_modules/*"

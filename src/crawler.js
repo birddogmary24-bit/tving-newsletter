@@ -178,10 +178,57 @@ async function crawlTodayArticles() {
 
     // 최대 600개 ID 탐색 (하루 200-500개 + 여유분)
     const MAX_CHECK = 600;
-    let consecutiveNotFound = 0;
-    const MAX_NOT_FOUND = 20; // 연속 20개 없으면 종료
+    
+    // [Fix] Sliding window forward search to bridge large ID gaps
+    let foundNewId = false;
+    let forwardStartNum = startNum;
+    let maxGapSearch = 5000;
+    let step = 100;
 
-    console.log(`[Crawler] Starting from article ID: ${formatArticleId(startNum + 1)}`);
+    console.log(`[Crawler] Checking for large ID gaps from ${formatArticleId(startNum + 1)}...`);
+    for (let currentJump = step; currentJump <= maxGapSearch; currentJump += step) {
+        const testNum = forwardStartNum + currentJump;
+        const testId = formatArticleId(testNum);
+        const articleExists = await fetchArticle(testId);
+        
+        if (articleExists) {
+            console.log(`[Crawler] Found newer article at ${testId} (jumped by ${currentJump}). Resyncing...`);
+            forwardStartNum += currentJump;
+            startNum = forwardStartNum;
+            foundNewId = true;
+            currentJump = 0; // reset to keep searching from new location
+        } else {
+            // we jumped into a dead zone, but the active articles might be somewhat near
+            // let's scan a small window around the jump point (+/- 10)
+            let foundInWindowSearch = false;
+            for (let offset = -10; offset <= 10; offset++) {
+                if (offset === 0) continue;
+                const windowId = formatArticleId(testNum + offset);
+                await sleep(50);
+                const wA = await fetchArticle(windowId);
+                if (wA) {
+                    console.log(`[Crawler] Found article in window-search at ${windowId}`);
+                    forwardStartNum = testNum + offset;
+                    startNum = testNum + offset;
+                    foundNewId = true;
+                    currentJump = 0; // reset the main outer jump loop starting from here
+                    foundInWindowSearch = true;
+                    break;
+                }
+            }
+            if (foundInWindowSearch) continue; 
+            
+            // If we successfully bridged a gap, trailing 100-jumps that fail mean we just hit the *new* end
+            if (foundNewId && currentJump >= 500) {
+                break;
+            }
+        }
+    }
+
+    let consecutiveNotFound = 0;
+    const MAX_NOT_FOUND = 30; // 약간 완화 연속 30개 없으면 종료
+
+    console.log(`[Crawler] Starting sequential search from article ID: ${formatArticleId(startNum + 1)}`);
     console.log(`[Crawler] Checking up to ${MAX_CHECK} article IDs...`);
 
     for (let i = 1; i <= MAX_CHECK; i++) {
@@ -234,8 +281,57 @@ async function getLatestArticles(totalLimit = 30) {
 
     let latestNum = currentNum;
     let consecutiveNotFound = 0;
-    // 최신 기사를 찾기 위해 충분히 탐색 (150개 정도)
-    for (let i = 1; i <= 150; i++) {
+    
+    // [Fix] Sliding window forward search to find the *true* latest ID bridging multi-day gaps
+    let forwardNum = currentNum;
+    let maxGapSearch = 5000;
+    let step = 100;
+    let farJumpSuccess = false;
+
+    console.log(`[Crawler] Bridging potential ID gaps...`);
+    for (let currentJump = step; currentJump <= maxGapSearch; currentJump += step) {
+        const testNum = forwardNum + currentJump;
+        const testId = formatArticleId(testNum);
+        const a = await fetchArticle(testId);
+
+        if (a) {
+            console.log(`[Crawler] Found article far ahead at ${testId} (jumped ${currentJump})`);
+            forwardNum = testNum;
+            farJumpSuccess = true;
+            currentNum = testNum;
+            currentJump = 0; 
+        } else {
+            let foundInWindowSearch = false;
+            for (let offset = -10; offset <= 10; offset++) {
+                if (offset === 0) continue;
+                const windowId = formatArticleId(testNum + offset);
+                // We don't want to fetch too aggressively here on live server for every scan, 
+                // so we do this conditionally or sequentially, but we have to ensure we find it.
+                // Using sleep to prevent rate limits
+                await sleep(50);
+                const wA = await fetchArticle(windowId);
+                if (wA) {
+                    console.log(`[Crawler] Found article in window-search at ${windowId}`);
+                    forwardNum = testNum + offset;
+                    farJumpSuccess = true;
+                    currentNum = testNum + offset;
+                    currentJump = 0; 
+                    foundInWindowSearch = true;
+                    break;
+                }
+            }
+            if (foundInWindowSearch) continue; 
+            
+            if (farJumpSuccess && currentJump >= 500) {
+                break;
+            }
+        }
+    }
+    
+    currentNum = forwardNum;
+    
+    // Fine-tune around the bridged edge
+    for (let i = 1; i <= 60; i++) {
         const id = formatArticleId(currentNum + i);
         const a = await fetchArticle(id);
         if (a) {
@@ -243,7 +339,7 @@ async function getLatestArticles(totalLimit = 30) {
             consecutiveNotFound = 0;
         } else {
             consecutiveNotFound++;
-            if (consecutiveNotFound >= 10) break;
+            if (consecutiveNotFound >= 15) break;
         }
     }
 

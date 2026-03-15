@@ -12,6 +12,7 @@ let db = null;
 async function initDatabase() {
     db = new Firestore({
         projectId: process.env.GCP_PROJECT_ID,
+        databaseId: process.env.FIRESTORE_DATABASE_ID || '(default)',
     });
 
     // 연결 테스트

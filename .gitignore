@@ -37,3 +37,6 @@ DEPLOY_NOTE.txt
 
 # Google Cloud SDK
 google-cloud-sdk/
+
+# npm local cache
+.npm-local/

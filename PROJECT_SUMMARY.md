@@ -208,6 +208,7 @@ tving-newsletter/
 | [PRD.md](PRD.md) | 프로덕트 요구사항, 기능 명세 | PM, 기획자 |
 | [TECHNICAL_SPEC.md](TECHNICAL_SPEC.md) | 기술 상세, API, 알고리즘 | 개발자 |
 | [DEPLOY_GCP.md](DEPLOY_GCP.md) | GCP 배포 가이드 | DevOps |
+| LOGGING.md | 로깅 및 모니터링 가이드 | 개발자, 운영자 |
 | [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) | 프로젝트 현황 요약 | 관리자 |
 
 ---
